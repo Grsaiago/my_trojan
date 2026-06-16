@@ -2,15 +2,19 @@ NAME = my_trojan
 
 CC = clang
 CFLAGS =	-g -Wall -Wextra -Werror \
-			-std=c99 \
+			-std=c11 \
 			-Wpedantic \
 			-Wconversion \
 			-Wdouble-promotion \
 			-Wno-unused-parameter \
 			-Wno-unused-function \
 			-Wno-sign-conversion \
+			-fstack-usage \
 			-fsanitize=undefined \
-			-fsanitize-trap
+			-fsanitize-trap \
+			-D_POSIX_C_SOURCE=200809L
+INCLUDES = -I./include/
+LDLIBS = -lsystemd
 
 # payload
 PAYLOAD_OUT = payload
@@ -25,7 +29,10 @@ TROJAN_SRC_DIR = src/trojan
 TROJAN_OBJ_DIR = obj/trojan
 
 TROJAN_SRCS =	$(TROJAN_SRC_DIR)/main.c \
-				$(TROJAN_SRC_DIR)/payload.c
+				$(TROJAN_SRC_DIR)/payload.c \
+				$(TROJAN_SRC_DIR)/daemonize.c
+
+
 TROJAN_OBJS = $(patsubst $(TROJAN_SRC_DIR)/%.c, $(TROJAN_OBJ_DIR)/%.o, $(TROJAN_SRCS))
 
 .PHONY: all
@@ -45,15 +52,15 @@ $(TROJAN_OBJ_DIR):
 
 # compile payload sources
 $(PAYLOAD_OBJ_DIR)/%.o: $(PAYLOAD_SRC_DIR)/%.c | $(PAYLOAD_OBJ_DIR)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # compile trojan sources
 $(TROJAN_OBJ_DIR)/%.o: $(TROJAN_SRC_DIR)/%.c | $(TROJAN_OBJ_DIR)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # link payload executable
 $(PAYLOAD_OUT): $(PAYLOAD_OBJS)
-	@$(CC) $(CFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@ $(LDLIBS)
 
 # generate payload C array via xxd
 $(TROJAN_SRC_DIR)/payload.c: $(PAYLOAD_OUT)
@@ -61,7 +68,7 @@ $(TROJAN_SRC_DIR)/payload.c: $(PAYLOAD_OUT)
 
 # link my_trojan executable
 $(NAME): $(TROJAN_OBJS)
-	@$(CC) $(CFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
 
 .PHONY: build
 build: $(NAME) ## Builds the binary

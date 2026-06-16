@@ -1,0 +1,4 @@
+#ifndef __MY_TROJAN_SHARED_INC
+#define __MY_TROJAN_SHARED_INC
+
+#endif // __MY_TROJAN_SHARED_INC
