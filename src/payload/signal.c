@@ -16,9 +16,14 @@ static void sigchld_handler(int sig, siginfo_t *info, void *_) {
 	}
 }
 
-void setup_sigchld(void) {
+/*
+ * Returns 0 on success and -1 on failure
+ */
+int install_sigchld_handler(void) {
 	struct sigaction sa = {.sa_sigaction = sigchld_handler,
 						   .sa_flags = SA_RESTART | SA_NOCLDSTOP | SA_SIGINFO};
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGCHLD, &sa, NULL);
+	if (sigemptyset(&sa.sa_mask) != 0) {
+		return (-1);
+	}
+	return (sigaction(SIGCHLD, &sa, NULL));
 }

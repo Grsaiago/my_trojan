@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
-int daemonize(void);
+int patch_payload(unsigned char *payload, unsigned int payload_len);
 
 #endif // __TROJAN_INC

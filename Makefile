@@ -13,6 +13,7 @@ CFLAGS =	-g -Wall -Wextra -Werror \
 			-fsanitize=undefined \
 			-fsanitize-trap \
 			-D_POSIX_C_SOURCE=200809L
+
 INCLUDES = -I./include/
 LDLIBS = -lsystemd
 
@@ -30,7 +31,7 @@ TROJAN_OBJ_DIR = obj/trojan
 
 TROJAN_SRCS =	$(TROJAN_SRC_DIR)/main.c \
 				$(TROJAN_SRC_DIR)/payload.c \
-				$(TROJAN_SRC_DIR)/daemonize.c
+				$(TROJAN_SRC_DIR)/patch_payload.c
 
 
 TROJAN_OBJS = $(patsubst $(TROJAN_SRC_DIR)/%.c, $(TROJAN_OBJ_DIR)/%.o, $(TROJAN_SRCS))
