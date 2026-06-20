@@ -10,36 +10,38 @@
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/wait.h>
 #include <systemd/sd-daemon.h>
+#include <systemd/sd-journal.h>
+#include <threads.h>
 #include <unistd.h>
 
+// macros as per:
+// https://www.freedesktop.org/software/systemd/man/latest/sd_journal_print.html#
+// https://www.freedesktop.org/software/systemd/man/latest/systemd.journal-fields.html#
 #define Debug(msg)                                                             \
-	(dprintf(STDOUT_FILENO,                                                    \
-			 SD_DEBUG "[file: %s][line: %d][func: %s] " msg "\n",              \
-			 __FILE_NAME__, __LINE__, __PRETTY_FUNCTION__))
+	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_DEBUG, "TID=%lu",   \
+					 thrd_current(), NULL))
 
 #define Info(msg)                                                              \
-	(dprintf(STDOUT_FILENO,                                                    \
-			 SD_INFO "[file: %s][line: %d][func: %s] " msg "\n",               \
-			 __FILE_NAME__, __LINE__, __PRETTY_FUNCTION__))
+	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_INFO, "TID=%lu",    \
+					 thrd_current(), NULL))
 
 #define Warn(msg)                                                              \
-	(dprintf(STDERR_FILENO,                                                    \
-			 SD_WARNING "[file: %s][line: %d][func: %s] " msg "\n",            \
-			 __FILE_NAME__, __LINE__, __PRETTY_FUNCTION__))
+	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_WARNING,            \
+					 "ERRNO=%d", errno, "TID=%lu", thrd_current(), NULL))
 
 #define Err(msg)                                                               \
-	(dprintf(STDERR_FILENO, SD_ERR "[file: %s][line: %d][func: %s] " msg "\n", \
-			 __FILE_NAME__, __LINE__, __PRETTY_FUNCTION__))
-
-extern pid_t client_seats[3];
+	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_ERR, "ERRNO=%d",    \
+					 errno, "TID=%lu", thrd_current(), NULL))
 
 int install_sigchld_handler(void);
 int create_listener(void);
 
-int client_buffer_has_seat(void);
-int client_buffer_acquire_seat(pid_t new_seat);
+int		client_buffer_has_seat(void);
+int		client_buffer_acquire_seat(pid_t client_id);
+int32_t client_buffer_remove_seat(pid_t client_id);
 
 ssize_t read_with_timeout(int fd, char *buffer, size_t max_bytes,
 						  int timeout_seconds);
