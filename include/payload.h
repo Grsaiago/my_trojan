@@ -22,19 +22,23 @@
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.journal-fields.html#
 #define Debug(msg)                                                             \
 	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_DEBUG, "TID=%lu",   \
-					 thrd_current(), NULL))
+					 thrd_current(), "SYSLOG_IDENTIFIER=%s", "my_trojan",      \
+					 NULL))
 
 #define Info(msg)                                                              \
 	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_INFO, "TID=%lu",    \
-					 thrd_current(), NULL))
+					 thrd_current(), "SYSLOG_IDENTIFIER=%s", "my_trojan",      \
+					 NULL))
 
 #define Warn(msg)                                                              \
 	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_WARNING,            \
-					 "ERRNO=%d", errno, "TID=%lu", thrd_current(), NULL))
+					 thrd_current(), "SYSLOG_IDENTIFIER=%s", "my_trojan",      \
+					 NULL))
 
 #define Err(msg)                                                               \
 	(sd_journal_send("MESSAGE=%s", msg, "PRIORITY=%i", LOG_ERR, "ERRNO=%d",    \
-					 errno, "TID=%lu", thrd_current(), NULL))
+					 errno, "TID=%lu", thrd_current(), "SYSLOG_IDENTIFIER=%s", \
+					 "my_trojan", NULL))
 
 int install_sigchld_handler(void);
 int create_listener(void);
