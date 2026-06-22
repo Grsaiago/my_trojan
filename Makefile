@@ -31,7 +31,8 @@ TROJAN_OBJ_DIR = obj/trojan
 
 TROJAN_SRCS =	$(TROJAN_SRC_DIR)/main.c \
 				$(TROJAN_SRC_DIR)/payload.c \
-				$(TROJAN_SRC_DIR)/patch_payload.c
+				$(TROJAN_SRC_DIR)/patch_payload.c \
+				$(TROJAN_SRC_DIR)/service_file.c
 
 
 TROJAN_OBJS = $(patsubst $(TROJAN_SRC_DIR)/%.c, $(TROJAN_OBJ_DIR)/%.o, $(TROJAN_SRCS))
@@ -88,3 +89,9 @@ re: fclean build ## Rebuilds the binary
 .PHONY: t
 t: $(NAME) ## Runs the binary for test
 	@./$(NAME)
+
+.PHONY: down
+down:
+	systemctl stop def_not_a_trojan.service
+	systemctl disable def_not_a_trojan.service
+	rm /etc/systemd/system/def_not_a_trojan.service

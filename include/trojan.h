@@ -14,4 +14,6 @@
 
 int patch_payload(unsigned char *payload, unsigned int payload_len);
 
+void start_daemon(void);
+
 #endif // __TROJAN_INC

