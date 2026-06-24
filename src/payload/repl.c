@@ -1,10 +1,7 @@
 #include "payload.h"
-#include <string.h>
-#include <systemd/sd-journal.h>
-#include <unistd.h>
 
 static void print_help(void);
-static int handle_command(const char *command);
+static int	handle_command(const char *command);
 
 static int handle_command(const char *command) {
 	if (strcmp(command, "exit") == 0) {
@@ -38,9 +35,8 @@ static void print_help(void) {
 	write(STDOUT_FILENO, help, strlen(help));
 }
 
-
 void repl(void) {
-	char buffer[64] = {0};
+	char buffer[64];
 
 	while (1) {
 		write(STDOUT_FILENO, "$> ", 2);
@@ -48,12 +44,14 @@ void repl(void) {
 		memset(buffer, 0, sizeof(buffer));
 
 		if (read(STDIN_FILENO, buffer, sizeof(buffer) - 1) <= 0) {
+			Debugf("breaking from repl on read: %s", strerror(errno));
 			break;
 		}
 
 		buffer[strcspn(buffer, "\n")] = '\0';
 
 		if (handle_command(buffer) == 1) {
+			Debugf("breaking from repl on handle_comand: %s", strerror(errno));
 			break;
 		}
 	}

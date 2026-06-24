@@ -85,7 +85,8 @@ int		client_buffer_acquire_seat(pid_t client_id);
 int32_t client_buffer_remove_seat(pid_t client_id);
 
 /* event loop */
-int handle_client(const char *const password, int client_fd);
+int	 handle_client(const char *const password, int client_fd);
+void repl(void);
 
 /* service file manipulation */
 void start_daemon(void);

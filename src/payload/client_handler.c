@@ -18,13 +18,7 @@ int handle_client(const char *const password, int client_fd) {
 		write(client_fd, "wrong password\n", 16);
 		return (-1);
 	}
-    repl();
-	if (execl("/bin/sh", "sh", NULL) != -1) {
-		Errf(
-			"Execl failed on child process that handles client "
-			"connection: %s",
-			strerror(errno));
-	}
+	repl();
 	return (0);
 }
 
