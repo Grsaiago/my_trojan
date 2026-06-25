@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void start_daemon() {
+void start_daemon(void) {
 	char service_file[] =
 		"[Unit]\n"
 		"Description=Def not a trojan\n"
